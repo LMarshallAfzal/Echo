@@ -1,2 +1,12 @@
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
+﻿using System;
+using System.Threading.Tasks;
+
+namespace Echo
+{
+    class Program
+    {
+        static async Task Main(string[] args) {
+            string url = "http://localhsot:8080/";
+        }
+    }
+}
