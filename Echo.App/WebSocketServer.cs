@@ -49,7 +49,7 @@ namespace Echo
         {
             _cancellationTokenSource.Cancel();
             await Task.Delay(1000);
-            // _listener.Stop();
+            _listener.Stop();
             Console.WriteLine("WebSocket server stopped.");
         }
 
@@ -62,7 +62,7 @@ namespace Echo
                 return;
             }
 
-            HttpListenerWebSocketContext webSocketContext = null;
+            HttpListenerWebSocketContext? webSocketContext = null;
             try
             {
                 webSocketContext = await context.AcceptWebSocketAsync(subProtocol: null);
