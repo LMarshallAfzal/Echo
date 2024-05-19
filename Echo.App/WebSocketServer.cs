@@ -30,7 +30,7 @@ namespace Echo
                     HttpListenerContext context = await _listener.GetContextAsync();
                     if (context.Request.IsWebSocketRequest)
                     {
-                        ProcessWebSocketRequest(context);
+                        await ProcessWebSocketRequest(context);
                     }
                     else
                     {
@@ -45,16 +45,43 @@ namespace Echo
             }
         }
 
-        public void Stop()
+        public async Task StopAsync()
         {
             _cancellationTokenSource.Cancel();
-            _listener.Stop();
+            await Task.Delay(1000);
+            // _listener.Stop();
             Console.WriteLine("WebSocket server stopped.");
         }
 
         private async Task ProcessWebSocketRequest(HttpListenerContext context)
         {
-            // TODO: Handle the WebSocket request
+            if (!context.Request.IsWebSocketRequest)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                context.Response.Close();
+                return;
+            }
+
+            HttpListenerWebSocketContext webSocketContext = null;
+            try
+            {
+                webSocketContext = await context.AcceptWebSocketAsync(subProtocol: null);
+                var webSocket = webSocketContext.WebSocket;
+
+                // TODO: handle the WebSocket connection
+
+
+                await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                
+                Console.WriteLine($"WebSocket processing failed: {ex.Message}");
+                if (webSocketContext != null)
+                {
+                    webSocketContext.WebSocket.Abort();
+                }
+            }
         }
     }
 }

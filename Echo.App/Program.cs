@@ -14,7 +14,7 @@ namespace Echo
             Console.WriteLine("Press any key to stop the server...");
             Console.ReadKey();
 
-            server.Stop();
+            await server.StopAsync();
         }
     }
 }
