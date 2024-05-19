@@ -22,12 +22,26 @@ namespace Echo
         {
             _listener.Start();
             Console.WriteLine("WebSocket server started.");
+            Console.WriteLine("=========================");
+
+            foreach (string prefix in _listener.Prefixes)
+            {
+                Console.WriteLine($"Listening to incoming WS requests on {prefix}");
+            }
+
 
             while (!_cancellationTokenSource.IsCancellationRequested)
             {
                 try
                 {
                     HttpListenerContext context = await _listener.GetContextAsync();
+                    
+                    Console.WriteLine($"Request Headers:");
+                    foreach (string headerName in context.Request.Headers.AllKeys)
+                    {
+                        Console.WriteLine($"{headerName}: {context.Request.Headers[headerName]}");
+                    }
+
                     if (context.Request.IsWebSocketRequest)
                     {
                         await ProcessWebSocketRequest(context);
@@ -66,10 +80,11 @@ namespace Echo
             try
             {
                 webSocketContext = await context.AcceptWebSocketAsync(subProtocol: null);
+
                 var webSocket = webSocketContext.WebSocket;
+                Console.WriteLine($"WebSocket state: {webSocket.State}");
 
                 // TODO: handle the WebSocket connection
-
 
                 await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
             }
