@@ -42,20 +42,22 @@ public class WebSocketServerTests: IClassFixture<WebSocketServerFixture>
         }
     }
 
-    // [Fact]
-    // public async Task ProcessWebSocketRequest_ValidRequest_AcceptsConnection()
-    // {
-    //     // Act
-    //     using (ClientWebSocket client = new())
-    //     {
-    //         Uri uri = new(_webSocketUrl);
-    //         var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-    //         await client.ConnectAsync(uri, tokenSource.Token);
+    [Fact]
+    public async Task ProcessWebSocketRequest_ValidRequest_AcceptsConnection()
+    {
+        // Act
+        var serverTask = _server.StartAsync();
 
-    //         // Assert
-    //         Assert.Equal(WebSocketState.Open, client.State);
+        using (ClientWebSocket client = new())
+        {
+            Uri uri = new(_webSocketUrl);
+            var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            await client.ConnectAsync(uri, tokenSource.Token);
 
-    //         await client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
-    //     }
-    // }
+            // Assert
+            Assert.Equal(WebSocketState.Open, client.State);
+
+            await client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
+        }
+    }
 }
