@@ -36,11 +36,12 @@ namespace Echo
                 {
                     HttpListenerContext context = await _listener.GetContextAsync();
                     
-                    Console.WriteLine($"Request Headers:");
-                    foreach (string headerName in context.Request.Headers.AllKeys)
-                    {
-                        Console.WriteLine($"{headerName}: {context.Request.Headers[headerName]}");
-                    }
+                    // Console.WriteLine($"Request Headers:");
+                    // foreach (string headerName in context.Request.Headers.AllKeys)
+                    // {
+                    //     Console.WriteLine($"{headerName}: {context.Request.Headers[headerName]}");
+                    // }
+                    Console.WriteLine($"Request: {context.Request.HttpMethod} {context.Request.Headers["Host"]} {context.Request.Headers["Upgrade"]} {context.Request.Headers["Sec-WebSocket-Key"]} {context.Request.Headers["Sec-WebSocket-Version"]}\n");
 
                     if (context.Request.IsWebSocketRequest)
                     {
@@ -56,6 +57,9 @@ namespace Echo
                 {
                     Console.WriteLine($"Error: {ex.Message}");
                 }
+                // finally {
+                //     Console.WriteLine($"Request: {context.Request.HttpMethod} {context.Request.UserHostName} {context.Request.UserAgent}");
+                // }
             }
         }
 
@@ -85,6 +89,29 @@ namespace Echo
                 Console.WriteLine($"WebSocket state: {webSocket.State}");
 
                 // TODO: handle the WebSocket connection
+                var buffer = new byte[1024];
+                var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+
+                while (!result.CloseStatus.HasValue)
+                {
+                    if (result.MessageType == WebSocketMessageType.Text)
+                    {
+                        var recievedMessage = System.Text.Encoding.UTF8.GetString(buffer, 0, result.Count);
+                        Console.WriteLine($"Recieved message: {recievedMessage}");
+
+                        var sendBuffer = System.Text.Encoding.UTF8.GetBytes(recievedMessage);
+                        await webSocket.SendAsync(new ArraySegment<byte>(sendBuffer), WebSocketMessageType.Text, true, CancellationToken.None);
+                        Console.WriteLine($"Sent message back: {recievedMessage}");
+                    }
+                    else if (result.MessageType == WebSocketMessageType.Close)
+                    {
+                        await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
+                        Console.WriteLine("WebSocket connection closed.");
+                        break;
+                    }
+
+                    result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                }
 
                 await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
             }
