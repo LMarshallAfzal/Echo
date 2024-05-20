@@ -36,11 +36,6 @@ namespace Echo
                 {
                     HttpListenerContext context = await _listener.GetContextAsync();
                     
-                    // Console.WriteLine($"Request Headers:");
-                    // foreach (string headerName in context.Request.Headers.AllKeys)
-                    // {
-                    //     Console.WriteLine($"{headerName}: {context.Request.Headers[headerName]}");
-                    // }
                     Console.WriteLine($"Request: {context.Request.HttpMethod} {context.Request.Headers["Host"]} {context.Request.Headers["Upgrade"]} {context.Request.Headers["Sec-WebSocket-Key"]} {context.Request.Headers["Sec-WebSocket-Version"]}\n");
 
                     if (context.Request.IsWebSocketRequest)
@@ -57,9 +52,6 @@ namespace Echo
                 {
                     Console.WriteLine($"Error: {ex.Message}");
                 }
-                // finally {
-                //     Console.WriteLine($"Request: {context.Request.HttpMethod} {context.Request.UserHostName} {context.Request.UserAgent}");
-                // }
             }
         }
 
