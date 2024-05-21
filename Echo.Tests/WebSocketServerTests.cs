@@ -27,13 +27,13 @@ public class WebSocketServerTests: IClassFixture<WebSocketServerFixture>
         // Act
         var serverTask = _server.StartAsync();
 
-        // Assert
         using (ClientWebSocket client = new())
         {
+            // Arrange
             Uri uri = new(_webSocketUrl);
-            // Console.WriteLine(uri);
             Task connectTask = client.ConnectAsync(uri, CancellationToken.None);
 
+            // Assert
             Assert.True(connectTask.Wait(TimeSpan.FromSeconds(5)), "Failed to connect to the server.");
             Assert.Equal(WebSocketState.Open, client.State);
 
@@ -50,6 +50,7 @@ public class WebSocketServerTests: IClassFixture<WebSocketServerFixture>
 
         using (ClientWebSocket client = new())
         {
+            // Arrange
             Uri uri = new(_webSocketUrl);
             var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(5));
             await client.ConnectAsync(uri, tokenSource.Token);
@@ -58,6 +59,22 @@ public class WebSocketServerTests: IClassFixture<WebSocketServerFixture>
             Assert.Equal(WebSocketState.Open, client.State);
 
             await client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
+        }
+    }
+
+    [Fact]
+    public async Task ProcessWebSocketRequest_InvalidRequest_ReturnsStatusCodeBadRequest()
+    {
+        // Act
+        var serverTask = _server.StartAsync();
+
+        using (HttpClient client = new())
+        {   
+            // Arrange
+            var response = await client.GetAsync(_webSocketUrl);
+
+            // Assert
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         }
     }
 }
