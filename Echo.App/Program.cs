@@ -11,10 +11,8 @@ namespace Echo
             WebSocketServer server  = new WebSocketServer(url);
             await server.StartAsync();
 
-            Console.WriteLine("Press <ESC> key to stop the server...\n");
-            while(Console.ReadKey().Key != ConsoleKey.Escape) 
-            {
-            }
+            Console.WriteLine("Press <Ctrl+C> key to stop the server...\n");
+            
             await server.StopAsync();
         }
     }
