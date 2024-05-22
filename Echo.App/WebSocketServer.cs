@@ -7,10 +7,18 @@ using System.Threading.Tasks;
 
 namespace Echo 
 {
+    /// <summary>
+    /// Represents a WebSocket server.
+    /// </summary>
     public class WebSocketServer
     {
         private readonly HttpListener _listener;
         private readonly CancellationTokenSource _cancellationTokenSource;
+        
+        /// <summary>
+        /// Initializes a new instance of the <see cref="WebSocketServer"/> class with the specified URL.
+        /// </summary>
+        /// <param name="url">The URL on which the WebSocket server will listen for incoming requests.</param>
         public WebSocketServer(string url)
         {
             _listener = new HttpListener();
@@ -18,6 +26,10 @@ namespace Echo
             _cancellationTokenSource = new CancellationTokenSource();
         }
 
+        /// <summary>
+        /// Starts the WebSocket serve and listens for incoming requests.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous operation</returns>
         public async Task StartAsync()
         {
             _listener.Start();
@@ -34,6 +46,9 @@ namespace Echo
             {
                 try
                 {
+                    /// <summary>
+                    /// Get the HTTP listener context for the incoming request.
+                    /// </summary>
                     HttpListenerContext context = await _listener.GetContextAsync();
                     
                     Console.WriteLine($"Request: {context.Request.HttpMethod} {context.Request.Headers["Host"]} {context.Request.Headers["Upgrade"]} {context.Request.Headers["Sec-WebSocket-Key"]} {context.Request.Headers["Sec-WebSocket-Version"]}\n");
@@ -55,6 +70,10 @@ namespace Echo
             }
         }
 
+        /// <summary>
+        /// Stops the WebSocket server asynchronously.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous stop operation.</returns>
         public async Task StopAsync()
         {
             _cancellationTokenSource.Cancel();
@@ -63,10 +82,15 @@ namespace Echo
             Console.WriteLine("WebSocket server stopped.");
         }
 
+        /// <summary>
+        /// Processes the WebSocket request asynchronously.
+        /// </summary>
+        /// <param name="context">The HTTP listener context.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
         private async Task ProcessWebSocketRequest(HttpListenerContext context)
         {
             HttpListenerWebSocketContext? webSocketContext = null;
-            
+
             try
             {
                 webSocketContext = await context.AcceptWebSocketAsync(subProtocol: null);
@@ -74,7 +98,6 @@ namespace Echo
                 var webSocket = webSocketContext.WebSocket;
                 Console.WriteLine($"WebSocket state: {webSocket.State}");
 
-                // TODO: handle the WebSocket connection
                 var buffer = new byte[1024];
                 var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
 
