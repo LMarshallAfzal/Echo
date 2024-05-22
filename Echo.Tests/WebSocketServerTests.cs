@@ -77,4 +77,57 @@ public class WebSocketServerTests: IClassFixture<WebSocketServerFixture>
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         }
     }
+
+    [Fact]
+    public async Task ProcessWebSocketRequest_SendAndReceiveMessages()
+    {
+        // Act
+        var serverTask = _server.StartAsync();
+
+        using (ClientWebSocket client = new())
+        {
+            // Arrange
+            Uri uri = new(_webSocketUrl);
+            await client.ConnectAsync(uri, CancellationToken.None);
+
+            var message = "Hello, server!";
+            var buffer = System.Text.Encoding.UTF8.GetBytes(message);
+            await client.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
+
+            var receiveBuffer = new byte[1024];
+            var result = await client.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), CancellationToken.None);
+
+            // Assert
+            Assert.Equal(WebSocketMessageType.Text, result.MessageType);
+            var receivedMessage = System.Text.Encoding.UTF8.GetString(receiveBuffer, 0, result.Count);
+            Assert.Equal(message, receivedMessage);
+
+            await client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
+        }
+    }
+
+    [Fact]
+    public async Task ProcessWebSocketRequest_HandleCloseMessage()
+    {
+        // Act
+        var serverTask = _server.StartAsync();
+
+        using (ClientWebSocket client = new())
+        {
+            // Arrange
+            Uri uri = new(_webSocketUrl);
+            await client.ConnectAsync(uri, CancellationToken.None);
+
+            // Send a text message
+            var message = "Hello, server!";
+            var buffer = System.Text.Encoding.UTF8.GetBytes(message);
+            await client.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
+
+            // Send a close message
+            await client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
+
+            // Assert
+            Assert.Equal(WebSocketState.Closed, client.State);
+        }
+    }
 }

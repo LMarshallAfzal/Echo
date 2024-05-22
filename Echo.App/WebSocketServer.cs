@@ -65,14 +65,8 @@ namespace Echo
 
         private async Task ProcessWebSocketRequest(HttpListenerContext context)
         {
-            if (!context.Request.IsWebSocketRequest)
-            {
-                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-                context.Response.Close();
-                return;
-            }
-
             HttpListenerWebSocketContext? webSocketContext = null;
+            
             try
             {
                 webSocketContext = await context.AcceptWebSocketAsync(subProtocol: null);
@@ -84,25 +78,34 @@ namespace Echo
                 var buffer = new byte[1024];
                 var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
 
-                while (!result.CloseStatus.HasValue)
+                if (result.MessageType == WebSocketMessageType.Close)
                 {
-                    if (result.MessageType == WebSocketMessageType.Text)
+                    await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
+                    Console.WriteLine("WebSocket connection closed.");
+                }
+                else
+                {
+                    while (!result.CloseStatus.HasValue)
                     {
-                        var recievedMessage = System.Text.Encoding.UTF8.GetString(buffer, 0, result.Count);
-                        Console.WriteLine($"Recieved message: {recievedMessage}");
+                        if (result.MessageType == WebSocketMessageType.Text)
+                        {
+                            var receivedMessage = System.Text.Encoding.UTF8.GetString(buffer, 0, result.Count);
+                            Console.WriteLine($"Received message: {receivedMessage}");
 
-                        var sendBuffer = System.Text.Encoding.UTF8.GetBytes(recievedMessage);
-                        await webSocket.SendAsync(new ArraySegment<byte>(sendBuffer), WebSocketMessageType.Text, true, CancellationToken.None);
-                        Console.WriteLine($"Sent message back: {recievedMessage}");
-                    }
-                    else if (result.MessageType == WebSocketMessageType.Close)
-                    {
-                        await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
-                        Console.WriteLine("WebSocket connection closed.");
-                        break;
-                    }
+                            var sendBuffer = System.Text.Encoding.UTF8.GetBytes(receivedMessage);
+                            await webSocket.SendAsync(new ArraySegment<byte>(sendBuffer), WebSocketMessageType.Text, true, CancellationToken.None);
+                            Console.WriteLine($"Sent message back: {receivedMessage}");
+                        }
 
-                    result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                        result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+
+                        if (result.MessageType == WebSocketMessageType.Close)
+                        {
+                            await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
+                            Console.WriteLine("WebSocket connection closed.");
+                            break;
+                        }
+                    }
                 }
 
                 await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);

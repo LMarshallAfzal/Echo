@@ -48,7 +48,7 @@ Generated\ Files/
 [Bb]uild[Ll]og.*
 
 # ReportGenerator
-coveragereport/*
+coveragereport/
 
 # NUnit
 *.VisualState.xml

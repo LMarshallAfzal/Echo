@@ -26,10 +26,7 @@ To get coverage ()
 ```bash 
     dotnet test --collect:"XPlat Code Coverage"
 
-    reportgenerator
-    "-reports:Echo.Tests/TestResults/<coverage-id>/coverage.cobertura.xml" 
-    "-targetdir:coveragereport" 
-    -reporttypes:Html
+    reportgenerator "-reports:TestResults/<coverage-id>/coverage.cobertura.xml" "-targetdir:coveragereport" -reporttypes:Html
 ```
 
 ## Docs
