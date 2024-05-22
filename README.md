@@ -6,6 +6,16 @@ by [@LMarshallAfzal](https://github.com/lmarshallafzal)
 
 ## Features
 
+## Usage
+
+To start the Echo websocket server
+```bash
+    cd Echo.App/
+    
+    dotnet build
+    dotnet run
+```
+
 ## Docs
 
 ## Deployment
