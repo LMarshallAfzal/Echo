@@ -14,6 +14,7 @@ namespace Echo
     {
         private readonly HttpListener _listener;
         private readonly CancellationTokenSource _cancellationTokenSource;
+        private readonly Dictionary<string, ConnectedClient> _connectedClients = new Dictionary<string, ConnectedClient>();
         
         /// <summary>
         /// Initializes a new instance of the <see cref="WebSocketServer"/> class with the specified URL.
@@ -98,6 +99,8 @@ namespace Echo
                 var webSocket = webSocketContext.WebSocket;
                 Console.WriteLine($"WebSocket state: {webSocket.State}");
 
+                await HandleClientConnection(webSocket);
+
                 var buffer = new byte[1024];
                 var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
 
@@ -142,6 +145,16 @@ namespace Echo
                     webSocketContext.WebSocket.Abort();
                 }
             }
+        }
+
+        private async Task HandleClientConnection(WebSocket webSocket)
+        {
+            string clientId = Guid.NewGuid().ToString();
+            var connectedClient = new ConnectedClient(clientId, webSocket); 
+            _connectedClients.Add(clientId, connectedClient);
+
+            var welcomeBuffer = System.Text.Encoding.UTF8.GetBytes("Welcome to Echo Chat!");
+            await webSocket.SendAsync(new ArraySegment<byte>(welcomeBuffer), WebSocketMessageType.Text, true, CancellationToken.None);
         }
     }
 }
