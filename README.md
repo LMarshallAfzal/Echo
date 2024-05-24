@@ -6,6 +6,29 @@ by [@LMarshallAfzal](https://github.com/lmarshallafzal)
 
 ## Features
 
+## Usage
+
+To start the Echo websocket server
+```bash
+    cd Echo.App/
+
+    dotnet build
+    dotnet run
+```
+
+To test the source code do the following
+```bash
+    cd Echo.Tests
+
+    dotnet test
+```
+To get coverage ()
+```bash 
+    dotnet test --collect:"XPlat Code Coverage"
+
+    reportgenerator "-reports:TestResults/<coverage-id>/coverage.cobertura.xml" "-targetdir:coveragereport" -reporttypes:Html
+```
+
 ## Docs
 
 ## Deployment
