@@ -14,6 +14,7 @@ namespace Echo
     {
         private readonly HttpListener _listener;
         private readonly CancellationTokenSource _cancellationTokenSource;
+        private readonly Dictionary<string, ConnectedClient> _connectedClients = new Dictionary<string, ConnectedClient>();
         
         /// <summary>
         /// Initializes a new instance of the <see cref="WebSocketServer"/> class with the specified URL.
@@ -98,12 +99,14 @@ namespace Echo
                 var webSocket = webSocketContext.WebSocket;
                 Console.WriteLine($"WebSocket state: {webSocket.State}");
 
+                ConnectedClient connectedClient = await HandleClientConnection(webSocket);
+
                 var buffer = new byte[1024];
                 var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
 
                 if (result.MessageType == WebSocketMessageType.Close)
                 {
-                    await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
+                    await webSocket.CloseAsync(result.CloseStatus ?? WebSocketCloseStatus.NormalClosure, result.CloseStatusDescription ?? string.Empty, CancellationToken.None);
                     Console.WriteLine("WebSocket connection closed.");
                 }
                 else
@@ -124,7 +127,7 @@ namespace Echo
 
                         if (result.MessageType == WebSocketMessageType.Close)
                         {
-                            await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
+                            await webSocket.CloseAsync(result.CloseStatus ?? WebSocketCloseStatus.NormalClosure, result.CloseStatusDescription ?? string.Empty, CancellationToken.None);
                             Console.WriteLine("WebSocket connection closed.");
                             break;
                         }
@@ -132,6 +135,10 @@ namespace Echo
                 }
 
                 await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
+                Console.WriteLine("WebSocket connection closed.");
+
+                RemoveConnectedClient(connectedClient.ClientId);
+
             }
             catch (Exception ex)
             {
@@ -141,6 +148,36 @@ namespace Echo
                 {
                     webSocketContext.WebSocket.Abort();
                 }
+            }
+        }
+
+        /// <summary>
+        /// Create a new connectedClient instance and add it to the _connectedClients dictionary
+        /// </summary>
+        /// <param name="webSocket">An instance of a WebSocket</param>
+        /// <returns>An instance of connected client instance</returns>
+        private async Task<ConnectedClient> HandleClientConnection(WebSocket webSocket)
+        {
+            string clientId = Guid.NewGuid().ToString();
+            var connectedClient = new ConnectedClient(clientId, webSocket); 
+            _connectedClients.Add(clientId, connectedClient);
+
+            var welcomeBuffer = System.Text.Encoding.UTF8.GetBytes("Welcome to Echo Chat!");
+            await webSocket.SendAsync(new ArraySegment<byte>(welcomeBuffer), WebSocketMessageType.Text, true, CancellationToken.None);
+
+            return connectedClient;
+        }
+
+        /// <summary>
+        /// Remove specified connected client from _connectedClient dictionary
+        /// </summary>
+        /// <param name="clientId">The ID of the connected client to be removed</param>
+        private void RemoveConnectedClient(string clientId)
+        {
+            if(_connectedClients.ContainsKey(clientId))
+            {
+                _connectedClients.Remove(clientId);
+                Console.WriteLine($"Client {clientId} removed from the connected clients.");
             }
         }
     }

@@ -90,17 +90,31 @@ public class WebSocketServerTests: IClassFixture<WebSocketServerFixture>
             Uri uri = new(_webSocketUrl);
             await client.ConnectAsync(uri, CancellationToken.None);
 
-            var message = "Hello, server!";
-            var buffer = System.Text.Encoding.UTF8.GetBytes(message);
-            await client.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
+            string[] expectedMessages = { "Welcome to Echo Chat!", "Hello, server!" };
+            string[] messagesToSend = { "Hello, server!" };
 
+            var buffers = messagesToSend.Select(msg => System.Text.Encoding.UTF8.GetBytes(msg)).ToArray();
+
+            foreach (var buffer in buffers)
+            {
+                await client.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
+            }
+
+            var receivedMessages = new List<string>();
             var receiveBuffer = new byte[1024];
-            var result = await client.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), CancellationToken.None);
+
+            WebSocketReceiveResult result;
+            do
+            {
+                result = await client.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), CancellationToken.None);
+                Assert.Equal(WebSocketMessageType.Text, result.MessageType);
+
+                var receivedMessage = System.Text.Encoding.UTF8.GetString(receiveBuffer, 0, result.Count);
+                receivedMessages.Add(receivedMessage);
+            } while (!result.EndOfMessage || receivedMessages.Count < expectedMessages.Length);
 
             // Assert
-            Assert.Equal(WebSocketMessageType.Text, result.MessageType);
-            var receivedMessage = System.Text.Encoding.UTF8.GetString(receiveBuffer, 0, result.Count);
-            Assert.Equal(message, receivedMessage);
+            Assert.Equal(expectedMessages, receivedMessages);
 
             await client.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
         }
