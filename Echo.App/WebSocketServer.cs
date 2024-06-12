@@ -151,13 +151,16 @@ namespace Echo
             }
         }
 
+        /// <summary>
+        /// Create a new connectedClient instance and add it to the _connectedClients dictionary
+        /// </summary>
+        /// <param name="webSocket">An instance of a WebSocket</param>
+        /// <returns>An instance of connected client instance</returns>
         private async Task<ConnectedClient> HandleClientConnection(WebSocket webSocket)
         {
             string clientId = Guid.NewGuid().ToString();
             var connectedClient = new ConnectedClient(clientId, webSocket); 
             _connectedClients.Add(clientId, connectedClient);
-
-            // webSocket.SetContext(clientId);
 
             var welcomeBuffer = System.Text.Encoding.UTF8.GetBytes("Welcome to Echo Chat!");
             await webSocket.SendAsync(new ArraySegment<byte>(welcomeBuffer), WebSocketMessageType.Text, true, CancellationToken.None);
@@ -165,6 +168,10 @@ namespace Echo
             return connectedClient;
         }
 
+        /// <summary>
+        /// Remove specified connected client from _connectedClient dictionary
+        /// </summary>
+        /// <param name="clientId">The ID of the connected client to be removed</param>
         private void RemoveConnectedClient(string clientId)
         {
             if(_connectedClients.ContainsKey(clientId))
